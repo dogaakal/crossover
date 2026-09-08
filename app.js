@@ -636,25 +636,63 @@ const standalone = () =>
 
 const isIOS = () =>
   /iP(hone|ad|od)/.test(navigator.platform || '') ||
-  (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ||   // iPadOS
-  /iP(hone|ad|od)/.test(navigator.userAgent);
+  /iP(hone|ad|od)/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);  // iPadOS
+
+const isAndroid = () => /Android/i.test(navigator.userAgent);
+// iPadOS 13+ reports itself as a Mac and only the touch points give it away.
+// Match "Macintosh", not "Mac": an iPhone's UA says "like Mac OS X" too, which
+// would otherwise label every iPhone an iPad.
+const isIPad = () => !/iPhone|iPod/.test(navigator.userAgent) &&
+  (/iPad/.test(navigator.userAgent) ||
+   (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+
+/* Name the platform on the button, so nobody is left wondering whether it is
+   meant for their phone. Saying "(Android)" to an iPhone user would be worse
+   than saying nothing, so each platform is told only about itself. */
+function installLabel() {
+  if (isIOS()) return `Add to Home Screen (${isIPad() ? 'iPad' : 'iPhone'})`;
+  if (isAndroid()) return 'Install app (Android)';
+  return 'Install app';
+}
+
+const SHARE_GLYPH = '<span class="shareglyph" aria-hidden="true"></span>';
+function installTip() {
+  if (isIOS())
+    return `<b>On iPhone or iPad:</b> tap <b>Share</b> ${SHARE_GLYPH} in Safari, then
+            <b>Add to Home Screen</b>. It opens full-screen, like an app.`;
+  if (isAndroid())
+    // no ⋮ glyph: it renders as a colon in this typeface
+    return `<b>On Android:</b> open the browser menu (top right) and choose
+            <b>Install app</b>, or <b>Add to Home screen</b>.`;
+  return `<b>To install:</b> use the install icon in your browser's address bar,
+          or the browser menu.`;
+}
 
 function initInstall() {
-  const btn = $('#install'), tip = $('#iosTip');
+  const btn = $('#install'), tip = $('#iosTip'), label = $('#installLabel');
   if (!btn) return;
   if (standalone()) return;                   // already installed, nothing to offer
 
+  label.textContent = installLabel();
+  $('#tipText').innerHTML = installTip();
+
   let deferred = null;
 
-  // Chrome / Edge / Android: we get a real prompt to fire.
+  // Chrome and Edge hand us a real prompt to fire.
   addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferred = e;
     btn.hidden = false;
   });
 
-  // Safari never fires that event, so offer the manual route instead.
+  // Safari never fires that event, so offer the manual route straight away.
   if (isIOS()) btn.hidden = false;
+
+  // Android browsers that give no prompt (Firefox, Samsung Internet, or Chrome
+  // when it decides not to) still install from the menu — say so rather than
+  // leaving the button missing.
+  else if (isAndroid()) setTimeout(() => { if (!deferred) btn.hidden = false; }, 2500);
 
   btn.addEventListener('click', async () => {
     if (deferred) {
@@ -664,7 +702,7 @@ function initInstall() {
       if (outcome === 'accepted') btn.hidden = true;
       return;
     }
-    tip.hidden = !tip.hidden;                 // iOS: show the Share instructions
+    tip.hidden = !tip.hidden;                 // no prompt available: explain the manual route
   });
 
   $('#tipClose')?.addEventListener('click', () => { tip.hidden = true; });
