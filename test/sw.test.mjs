@@ -70,7 +70,7 @@ const shellName = (await caches.keys()).find(n => n.startsWith('shell'));
 const cached = (await (await caches.open(shellName)).keys()).map(r => r.url);
 check('install precaches the shell', cached.length >= 6, `${cached.length} entries`);
 check('precache includes index/app.css/app.js',
-  ['index.html', 'app.css', 'app.js'].every(f => cached.some(u => u.endsWith(f))));
+  ['index.html', 'app.css', 'app.js'].every(f => cached.some(u => u.includes(f))));
 check('precache is scoped under /crossover/', cached.every(u => u.startsWith(PAGE)));
 
 // ── activate drops stale caches ──────────────────────────────
@@ -103,6 +103,44 @@ offline = true;
 const off = await fire('fetch', {request: req(PAGE, 'navigate')});
 check('navigation falls back to cache when offline', off.responded && off.value && off.value.ok);
 offline = false;
+
+// ── a deploy must reach the user on the NEXT load, not the one after ──
+// This is the bug an iPhone hit: app.js was served from cache first, so the
+// new install label did not appear until a second visit.
+{
+  const shell = await caches.open(shellName);
+  await shell.put('./app.js', new Res(PAGE + 'app.js:STALE'));
+  fetched.length = 0;
+  const r = await fire('fetch', {request: {...req(PAGE + 'app.js'), destination: 'script'}});
+  check('app.js is fetched from the network, not served stale',
+    fetched.includes(PAGE + 'app.js'));
+  check('app.js response is the fresh one',
+    r.responded && r.value && !String(r.value.url).endsWith('STALE'),
+    r.value ? r.value.url : 'no response');
+  check('the refreshed app.js replaces the cached copy',
+    (await shell.match('./app.js')).url === PAGE + 'app.js');
+
+  // ...but offline it must still fall back to whatever was cached
+  offline = true;
+  const off = await fire('fetch', {request: {...req(PAGE + 'app.js'), destination: 'script'}});
+  check('app.js falls back to cache when offline', off.responded && off.value && off.value.ok);
+  offline = false;
+}
+{
+  // css and the manifest follow the same rule
+  fetched.length = 0;
+  await fire('fetch', {request: {...req(PAGE + 'app.css'), destination: 'style'}});
+  check('app.css is network-first too', fetched.includes(PAGE + 'app.css'));
+}
+{
+  // icons stay cache-first, they are big and effectively immutable
+  const shell = await caches.open(shellName);
+  await shell.put('./icons/icon-192.png', new Res(PAGE + 'icons/icon-192.png:CACHED'));
+  fetched.length = 0;
+  const r = await fire('fetch', {request: {...req(PAGE + 'icons/icon-192.png'), destination: 'image'}});
+  check('icons are still served from cache first',
+    r.responded && String((await r.value).url).endsWith('CACHED'));
+}
 
 // ── non-GET is left alone ────────────────────────────────────
 const post = await fire('fetch', {request: req(PAGE + 'app.js', 'no-cors', 'POST')});

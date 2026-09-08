@@ -67,6 +67,12 @@ and a stale answer would be worse than an honest error, so API traffic passes
 straight through to the network. The app shell and the Google Fonts files are
 cached; page loads are network-first so a deploy lands immediately.
 
+Code and markup are fetched network-first and revalidated, and `index.html`
+points at `app.css?v=N` / `app.js?v=N`. **Bump that `N` and `VERSION` in
+`sw.js` together whenever you deploy** — otherwise a phone that already has the
+worker installed keeps running the previous build until its second visit, which
+is exactly how an old install button survived a fix.
+
 `test/sw.test.mjs` runs the worker against stubbed service-worker globals and
 asserts those guarantees (no dependencies, no network):
 

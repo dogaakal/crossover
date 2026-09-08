@@ -3,15 +3,15 @@
    offline. It deliberately never caches Wikidata responses — squad data
    changes and a stale answer would be worse than an honest error. */
 
-const VERSION = 'crossover-v1';
+const VERSION = 'crossover-v3';
 const SHELL   = `shell-${VERSION}`;
 const FONTS   = `fonts-${VERSION}`;
 
 const SHELL_FILES = [
   './',
   './index.html',
-  './app.css',
-  './app.js',
+  './app.css?v=3',
+  './app.js?v=3',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -80,7 +80,28 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Same-origin assets: serve from cache at once, refresh in the background.
+  // Code and markup are network-first. Serving these from cache first meant a
+  // deploy did not reach anyone until their SECOND visit — an iPhone kept
+  // showing the old install label long after the fix had shipped.
+  const isCode = ['script', 'style', 'manifest'].includes(request.destination) ||
+                 /\.(js|css|webmanifest)$/.test(url.pathname);
+  if (isCode) {
+    e.respondWith((async () => {
+      const cache = await caches.open(SHELL);
+      try {
+        // 'no-cache' still uses the HTTP cache but revalidates with the server
+        // first, so GitHub Pages' 10-minute max-age cannot pin an old build
+        const res = await fetch(request, { cache: 'no-cache' });
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+      } catch {
+        return (await cache.match(request)) || Response.error();   // offline
+      }
+    })());
+    return;
+  }
+
+  // Icons and the like barely change: cache first, refresh in the background.
   e.respondWith((async () => {
     const cache = await caches.open(SHELL);
     const hit = await cache.match(request);

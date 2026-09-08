@@ -715,6 +715,17 @@ function initInstall() {
 function initServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+  // When a new worker takes over an already-controlled page, reload once so the
+  // new build is actually the one running. Guarded on hadController, otherwise
+  // the very first install would reload the page out from under the visitor.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
   const register = () => navigator.serviceWorker.register('sw.js')
     .catch(err => console.warn('[crossover] service worker did not register:', err));
   // boot() frequently runs after 'load' has already fired, in which case a
