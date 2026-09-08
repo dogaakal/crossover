@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CROSSOVER — the shared-players almanac</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Chivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,400&family=Chivo+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='12' cy='16' r='9' fill='none' stroke='%23111' stroke-width='2'/><circle cx='20' cy='16' r='9' fill='none' stroke='%23111' stroke-width='2'/></svg>">
+</head>
+<body>
+
+<!-- paper grain + halftone, pure SVG, no images -->
+<svg class="grain" aria-hidden="true"><filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#gr)"/></svg>
+<div class="vignette" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"><span></span></div>
+
+<header class="masthead">
+  <div class="mast-rule"></div>
+  <div class="mast-row">
+    <div class="mast-left">
+      <span class="mast-meta">No.<b id="issueNo">001</b></span>
+      <span class="mast-meta" id="issueDate">—</span>
+    </div>
+    <h1 class="wordmark" aria-label="Crossover">
+      <span class="wm-venn" aria-hidden="true"><i></i><i></i></span>
+      <span class="wm-text">CROSS<em>OVER</em></span>
+    </h1>
+    <div class="mast-right">
+      <span class="mast-meta">SOURCE / WIKIDATA</span>
+      <span class="mast-meta live"><i></i>LIVE</span>
+    </div>
+  </div>
+  <div class="mast-rule thin"></div>
+  <p class="dek">Every footballer in history who wore both shirts. Pick two clubs — the ledger does the rest.</p>
+</header>
+
+<main>
+
+  <!-- ── THE CONSOLE ───────────────────────────────────────── -->
+  <section class="console" id="console">
+    <div class="slot" data-side="a">
+      <label class="slot-tag" for="inA">Club — one</label>
+      <div class="slot-field">
+        <div class="slot-crest" id="crestA" data-empty="1"></div>
+        <input id="inA" type="text" autocomplete="off" spellcheck="false" placeholder="Barcelona, Boca, Beşiktaş…" aria-label="First club">
+        <button class="slot-clear" id="clearA" type="button" aria-label="Clear first club">×</button>
+      </div>
+      <ul class="ac" id="acA" role="listbox" hidden></ul>
+      <div class="slot-picked" id="pickA" hidden></div>
+    </div>
+
+    <div class="versus" aria-hidden="true">
+      <svg viewBox="0 0 80 80"><circle class="vs-c" cx="30" cy="40" r="21"/><circle class="vs-c" cx="50" cy="40" r="21"/></svg>
+      <span>AND</span>
+    </div>
+
+    <div class="slot" data-side="b">
+      <label class="slot-tag" for="inB">Club — two</label>
+      <div class="slot-field">
+        <div class="slot-crest" id="crestB" data-empty="1"></div>
+        <input id="inB" type="text" autocomplete="off" spellcheck="false" placeholder="Paris, Juventus, Flamengo…" aria-label="Second club">
+        <button class="slot-clear" id="clearB" type="button" aria-label="Clear second club">×</button>
+      </div>
+      <ul class="ac" id="acB" role="listbox" hidden></ul>
+      <div class="slot-picked" id="pickB" hidden></div>
+    </div>
+
+    <button class="go" id="go" type="button" disabled>
+      <span class="go-face">RUN THE LEDGER</span>
+      <span class="go-face go-alt">RUN THE LEDGER</span>
+    </button>
+  </section>
+
+  <div class="presets" id="presets">
+    <span class="presets-tag">Try</span>
+    <div class="presets-list" id="presetList"></div>
+    <button class="dice" id="dice" type="button" title="Random fixture"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.2" y="1.2" width="13.6" height="13.6" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="5" cy="5" r="1.35"/><circle cx="11" cy="5" r="1.35"/><circle cx="8" cy="8" r="1.35"/><circle cx="5" cy="11" r="1.35"/><circle cx="11" cy="11" r="1.35"/></svg>Surprise me</button>
+  </div>
+
+  <!-- ── THE STAGE ─────────────────────────────────────────── -->
+  <section class="stage" id="stage" hidden>
+    <div class="stage-grid">
+      <div class="venn" id="venn">
+        <div class="disc disc-a" id="discA"><div class="disc-crest"></div></div>
+        <div class="disc disc-b" id="discB"><div class="disc-crest"></div></div>
+        <div class="lens-mark" aria-hidden="true"></div>
+      </div>
+      <div class="tally" id="tally">
+        <div class="odo" id="odo"></div>
+        <p class="tally-cap" id="tallyCap">players have worn both shirts</p>
+        <p class="tally-clubs" id="tallyClubs"></p>
+      </div>
+    </div>
+    <div class="ticker" id="ticker" hidden><div class="ticker-in" id="tickerIn"></div></div>
+    <dl class="facts" id="facts"></dl>
+  </section>
+
+  <!-- ── STATUS ────────────────────────────────────────────── -->
+  <div class="status" id="status" hidden></div>
+
+  <!-- ── RESULTS ───────────────────────────────────────────── -->
+  <section class="results" id="results" hidden>
+    <div class="res-bar">
+      <div class="res-count"><b id="resCount">0</b> <span>on file</span></div>
+      <div class="res-tools">
+        <input id="filterQ" class="filter" type="text" placeholder="filter names…" aria-label="Filter players by name">
+        <div class="seg" id="dirSeg" role="group" aria-label="Transfer direction">
+          <button data-dir="all" class="on" type="button">Both ways</button>
+          <button data-dir="ab" type="button" id="dirAB">A→B</button>
+          <button data-dir="ba" type="button" id="dirBA">B→A</button>
+        </div>
+        <label class="sortwrap">Sort
+          <select id="sortSel" aria-label="Sort players">
+            <option value="recent">Most recent</option>
+            <option value="oldest">Earliest</option>
+            <option value="apps">Appearances</option>
+            <option value="goals">Goals</option>
+            <option value="az">A–Z</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="empty" hidden></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-rule"></div>
+  <p>Data queried live from <a href="https://query.wikidata.org" target="_blank" rel="noopener">Wikidata</a> via SPARQL. Crests &amp; portraits © their respective clubs / photographers, served by Wikimedia. Career records reflect community-maintained data and may be incomplete for lower divisions and pre-war football.</p>
+  <p class="foot-meta"><span id="qtime">—</span></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
