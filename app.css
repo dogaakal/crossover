@@ -491,3 +491,47 @@ main{padding:0 clamp(16px,4vw,48px) 60px; position:relative; z-index:2}
 
 /* no badge on file: show nothing rather than a blank white puck */
 .disc-crest.no-crest{background-color:transparent; box-shadow:none}
+
+
+/* ══ INSTALL TO HOME SCREEN ══════════════════════════════════ */
+
+.install{display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  font-family:"Chivo Mono",monospace; font-size:11px; letter-spacing:.1em;
+  text-transform:uppercase; background:var(--paper); color:var(--ink);
+  border:1.5px solid var(--ink); padding:6px 12px;
+  box-shadow:3px 3px 0 var(--ink); transition:transform .14s, box-shadow .14s, background .15s}
+.install svg{width:14px;height:14px;flex:0 0 14px}
+.install:hover{background:var(--sky); transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink)}
+.install:active{transform:translate(2px,2px); box-shadow:0 0 0 var(--ink)}
+.install[hidden]{display:none}
+
+.ios-tip{position:relative; margin:14px 0 0; padding:12px 38px 12px 14px;
+  border:2px solid var(--ink); background:var(--sky);
+  font-size:13px; line-height:1.5; max-width:62ch}
+.ios-tip b{font-weight:700}
+.ios-tip[hidden]{display:none}
+.shareglyph{display:inline-block; width:11px; height:14px; vertical-align:-2px; margin:0 1px;
+  border:1.5px solid var(--ink); border-top:0; position:relative}
+.shareglyph::before{content:""; position:absolute; left:50%; top:-7px; width:1.5px; height:8px;
+  background:var(--ink); transform:translateX(-50%)}
+.shareglyph::after{content:""; position:absolute; left:50%; top:-7px; width:6px; height:6px;
+  border-left:1.5px solid var(--ink); border-top:1.5px solid var(--ink);
+  transform:translateX(-50%) rotate(45deg)}
+.tip-x{position:absolute; top:5px; right:7px; border:0; background:none; cursor:pointer;
+  font-size:20px; line-height:1; color:var(--ink); padding:2px 5px}
+.tip-x:hover{color:var(--hot)}
+
+@media (max-width:820px){
+  .install{width:100%; justify-content:center; padding:10px 12px}
+  .ios-tip{font-size:13.5px; padding:12px 34px 12px 12px}
+}
+
+/* installed and running full-screen: the install affordances are pointless,
+   and the notch/home-indicator need real padding */
+@media (display-mode:standalone), (display-mode:minimal-ui){
+  .install, .ios-tip{display:none !important}
+  .masthead{padding-top:max(18px, env(safe-area-inset-top))}
+  main, .foot{padding-left:max(16px, env(safe-area-inset-left));
+              padding-right:max(16px, env(safe-area-inset-right))}
+  .foot{padding-bottom:max(46px, calc(env(safe-area-inset-bottom) + 24px))}
+}

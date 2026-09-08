@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Crossover — shared-players almanac",
+  "short_name": "Crossover",
+  "description": "Every footballer in history who played for both of two given clubs.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "background_color": "#EFE8DA",
+  "theme_color": "#EFE8DA",
+  "categories": ["sports", "reference"],
+  "icons": [
+    { "src": "icons/icon-192.png",          "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png",          "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

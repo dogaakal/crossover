@@ -396,7 +396,9 @@ async function run() {
     $('#stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
     status.className = 'status err';
-    status.textContent = `Couldn't reach Wikidata — ${e.message}. Try again in a moment.`;
+    status.textContent = navigator.onLine === false
+      ? 'You are offline. Crossover reads every result live from Wikidata, so it needs a connection.'
+      : `Couldn't reach Wikidata — ${e.message}. Try again in a moment.`;
   } finally {
     go.classList.remove('busy');
   }
@@ -625,6 +627,64 @@ function initCursor() {
   })();
 }
 
+/* ── installing to a home screen ────────────────────────────── */
+
+const standalone = () =>
+  matchMedia('(display-mode: standalone)').matches ||
+  matchMedia('(display-mode: minimal-ui)').matches ||
+  navigator.standalone === true;              // iOS Safari's own flag
+
+const isIOS = () =>
+  /iP(hone|ad|od)/.test(navigator.platform || '') ||
+  (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ||   // iPadOS
+  /iP(hone|ad|od)/.test(navigator.userAgent);
+
+function initInstall() {
+  const btn = $('#install'), tip = $('#iosTip');
+  if (!btn) return;
+  if (standalone()) return;                   // already installed, nothing to offer
+
+  let deferred = null;
+
+  // Chrome / Edge / Android: we get a real prompt to fire.
+  addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferred = e;
+    btn.hidden = false;
+  });
+
+  // Safari never fires that event, so offer the manual route instead.
+  if (isIOS()) btn.hidden = false;
+
+  btn.addEventListener('click', async () => {
+    if (deferred) {
+      deferred.prompt();
+      const { outcome } = await deferred.userChoice;
+      deferred = null;
+      if (outcome === 'accepted') btn.hidden = true;
+      return;
+    }
+    tip.hidden = !tip.hidden;                 // iOS: show the Share instructions
+  });
+
+  $('#tipClose')?.addEventListener('click', () => { tip.hidden = true; });
+
+  addEventListener('appinstalled', () => { btn.hidden = true; tip.hidden = true; });
+}
+
+/* The worker only makes the shell installable and openable offline; it is set
+   up never to cache Wikidata answers. */
+function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+  const register = () => navigator.serviceWorker.register('sw.js')
+    .catch(err => console.warn('[crossover] service worker did not register:', err));
+  // boot() frequently runs after 'load' has already fired, in which case a
+  // listener for it would never run at all — register straight away instead.
+  if (document.readyState === 'complete') register();
+  else addEventListener('load', register, { once: true });
+}
+
 function boot() {
   pickers = { a: initPicker('a'), b: initPicker('b') };
 
@@ -659,6 +719,8 @@ function boot() {
   });
 
   initCursor();
+  initInstall();
+  initServiceWorker();
 
   // deep link: #Q7156-Q483020
   const m = location.hash.match(/^#(Q\d+)-(Q\d+)$/);

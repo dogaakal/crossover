@@ -49,6 +49,34 @@ both clubs.
 - **Always request a thumbnail width.** Messi's raw portrait is 5 MB; the same
   image at `?width=220` is 30 KB.
 
+## Installing it as an app
+
+The site is a PWA, so it can be added to a phone's home screen and opens
+full-screen with no browser chrome.
+
+- **Android / Chrome / Edge** — an **Install app** button appears next to the
+  presets once the browser judges the site installable. It can also be done from
+  the browser menu.
+- **iPhone / iPad** — Safari gives no install event to hook, so tapping the
+  button shows the manual route instead: **Share → Add to Home Screen**.
+- **Desktop Chrome/Edge** — same install button, or the icon in the address bar.
+
+`sw.js` exists to make the app installable and to let the shell open without a
+connection. It deliberately **never caches Wikidata responses** — squads change,
+and a stale answer would be worse than an honest error, so API traffic passes
+straight through to the network. The app shell and the Google Fonts files are
+cached; page loads are network-first so a deploy lands immediately.
+
+`test/sw.test.mjs` runs the worker against stubbed service-worker globals and
+asserts those guarantees (no dependencies, no network):
+
+```bash
+node test/sw.test.mjs
+```
+
+Icons are generated from the same venn mark the masthead uses; regenerate with
+`python3 tools/make-icons.py` if the brand colours change.
+
 ## Design notes
 
 Typeset in **Syne** (display) and **Chivo** / **Chivo Mono** (text and figures),
